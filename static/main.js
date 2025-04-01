@@ -1,7 +1,8 @@
 // API 端點設定
 const API_BASE_URL = '';  // 使用相對路徑
 const ERROR_MESSAGES = {
-    NETWORK_ERROR: '網路回應不正確',
+    NETWORK_ERROR: '網路連接錯誤，請檢查網路連接',
+    SERVER_ERROR: '服務器錯誤，請稍後再試',
     GENERAL_ERROR: '抱歉，發生了一些錯誤，請稍後再試。'
 };
 
@@ -20,6 +21,7 @@ function debounce(func, wait) {
 
 async function sendMessage(message) {
     try {
+        console.log('發送消息:', message);
         const response = await fetch(`${API_BASE_URL}/chat`, {
             method: 'POST',
             headers: {
@@ -28,11 +30,18 @@ async function sendMessage(message) {
             body: JSON.stringify({ message: message })
         });
 
+        console.log('收到回應:', response.status);
+        const data = await response.json();
+        console.log('回應數據:', data);
+
         if (!response.ok) {
-            throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
+            throw new Error(data.error || ERROR_MESSAGES.SERVER_ERROR);
         }
 
-        const data = await response.json();
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
         return {
             message: data.response
         };
@@ -40,7 +49,7 @@ async function sendMessage(message) {
         console.error('發送訊息時發生錯誤:', error);
         return {
             error: true,
-            message: ERROR_MESSAGES.GENERAL_ERROR
+            message: error.message || ERROR_MESSAGES.GENERAL_ERROR
         };
     }
 }
@@ -52,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sendButton = document.getElementById('send-button');
     const messageCache = new Map(); // 用於快取已處理的 Markdown
 
-    // 初始化 marked，只需執行一次
+    // 初始化 marked
     marked.setOptions({
         gfm: true,
         breaks: true,
@@ -94,11 +103,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const createMessageElement = (message, isUser = false) => {
+    const createMessageElement = (message, isUser = false, isError = false) => {
         const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+        messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'} ${isError ? 'error-message' : ''}`;
         
-        if (!isUser) {
+        if (!isUser && !isError) {
             // 檢查快取中是否已有處理過的內容
             if (!messageCache.has(message)) {
                 const sanitizedHtml = DOMPurify.sanitize(marked.parse(message));
@@ -147,14 +156,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // 隱藏打字指示器
             hideTypingIndicator();
 
-            // 顯示回應
-            fragment.appendChild(createMessageElement(response.message || response.error));
+            if (response.error) {
+                fragment.appendChild(createMessageElement(response.message, false, true));
+            } else {
+                fragment.appendChild(createMessageElement(response.message));
+            }
             chatContainer.appendChild(fragment);
             scrollToBottom();
         } catch (error) {
             console.error('處理訊息時發生錯誤:', error);
             hideTypingIndicator();
-            chatContainer.appendChild(createMessageElement(ERROR_MESSAGES.GENERAL_ERROR));
+            chatContainer.appendChild(createMessageElement(ERROR_MESSAGES.GENERAL_ERROR, false, true));
             scrollToBottom();
         } finally {
             // 重新啟用輸入和按鈕
