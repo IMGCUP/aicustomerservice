@@ -41,9 +41,8 @@ if not api_key:
     raise ValueError("請在 .env 文件中設置 OPENAI_API_KEY")
 
 # 初始化 OpenAI 客戶端
-client = OpenAI(
-    api_key=os.getenv('OPENAI_API_KEY')
-)
+client = OpenAI()
+client.api_key = os.getenv('OPENAI_API_KEY')
 
 # 配置日誌
 logging.basicConfig(
@@ -253,7 +252,7 @@ def chat():
         
         try:
             # 調用 OpenAI API
-            response = client.chat.completions.create(
+            response = client.ChatCompletion.create(
                 model="gpt-4-turbo-preview",
                 messages=messages,
                 max_tokens=1000,
