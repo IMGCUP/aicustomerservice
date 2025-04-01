@@ -42,8 +42,7 @@ if not api_key:
 
 # 初始化 OpenAI 客戶端
 client = OpenAI(
-    api_key=os.getenv('OPENAI_API_KEY'),
-    base_url="https://api.openai.com/v1"  # 明確指定 API 端點
+    api_key=os.getenv('OPENAI_API_KEY')
 )
 
 # 配置日誌
