@@ -110,8 +110,10 @@ def init_database():
 # 獲取對話歷史
 def get_conversation_history(limit=10):
     try:
+        # 獲取最近的對話歷史，按時間倒序排序
         history = ChatHistory.query.order_by(ChatHistory.timestamp.desc()).limit(limit).all()
-        return [(chat.user_message, chat.bot_response) for chat in reversed(history)]
+        # 反轉列表，使其按時間順序排序
+        return list(reversed(history))
     except Exception as e:
         logger.error(f"獲取對話歷史時發生錯誤: {str(e)}")
         return []
