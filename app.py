@@ -243,9 +243,9 @@ def chat():
         ]
         
         # 添加歷史對話
-        for user_msg, bot_msg in conversation_history:
-            messages.append({"role": "user", "content": user_msg})
-            messages.append({"role": "assistant", "content": bot_msg})
+        for hist in conversation_history:
+            messages.append({"role": "user", "content": hist.user_message})
+            messages.append({"role": "assistant", "content": hist.bot_response})
             
         # 添加當前用戶消息
         messages.append({"role": "user", "content": user_message})
@@ -253,7 +253,7 @@ def chat():
         try:
             # 調用 OpenAI API
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",  # 使用較穩定的模型
+                model="gpt-3.5-turbo",
                 messages=messages,
                 max_tokens=1000,
                 temperature=0.7,
@@ -264,17 +264,23 @@ def chat():
             bot_response = response.choices[0].message.content
             logger.info(f"AI 回應: {bot_response}")
             
-            # 儲存對話歷史
-            chat_history = ChatHistory(
-                user_message=user_message,
-                bot_response=bot_response
-            )
-            db.session.add(chat_history)
-            db.session.commit()
+            try:
+                # 儲存對話歷史
+                chat_history = ChatHistory(
+                    user_message=user_message,
+                    bot_response=bot_response
+                )
+                db.session.add(chat_history)
+                db.session.commit()
+                logger.info("成功儲存對話歷史")
+            except Exception as e:
+                logger.error(f"儲存對話歷史時發生錯誤: {str(e)}")
+                # 即使儲存失敗，仍然返回回應
+                return jsonify({'response': bot_response})
             
             return jsonify({'response': bot_response})
             
-        except openai.OpenAIError as e:
+        except openai.error.OpenAIError as e:
             error_message = f"OpenAI API 錯誤: {str(e)}"
             logger.error(error_message)
             return jsonify({'error': '系統錯誤，請稍後再試'}), 500
