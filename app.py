@@ -193,10 +193,11 @@ def format_knowledge_base_prompt():
 @cache_decorator(knowledge_base_cache)
 def load_knowledge_base():
     try:
-        if not os.path.exists('knowledge_base.json'):
+        kb_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'knowledge_base.json')
+        if not os.path.exists(kb_path):
             logger.warning("知識庫文件不存在，創建空知識庫")
             return {}
-        with open('knowledge_base.json', 'r', encoding='utf-8') as f:
+        with open(kb_path, 'r', encoding='utf-8') as f:
             knowledge_base = json.load(f)
             logger.info("成功載入知識庫")
             return knowledge_base
