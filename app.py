@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import json
 import os
-from openai import OpenAI, OpenAIError
+import openai
 import logging
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -41,8 +41,7 @@ if not api_key:
     raise ValueError("請在 .env 文件中設置 OPENAI_API_KEY")
 
 # 初始化 OpenAI 客戶端
-client = OpenAI()
-client.api_key = os.getenv('OPENAI_API_KEY')
+openai.api_key = os.getenv('OPENAI_API_KEY')
 
 # 配置日誌
 logging.basicConfig(
@@ -252,7 +251,7 @@ def chat():
         
         try:
             # 調用 OpenAI API
-            response = client.ChatCompletion.create(
+            response = openai.ChatCompletion.create(
                 model="gpt-4-turbo-preview",
                 messages=messages,
                 max_tokens=1000,
@@ -274,7 +273,7 @@ def chat():
             
             return jsonify({'response': bot_response})
             
-        except OpenAIError as e:
+        except openai.OpenAIError as e:
             error_message = f"OpenAI API 錯誤: {str(e)}"
             logger.error(error_message)
             return jsonify({'error': '系統錯誤，請稍後再試'}), 500
