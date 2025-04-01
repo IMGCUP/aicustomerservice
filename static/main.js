@@ -1,5 +1,5 @@
 // API 端點設定
-const API_BASE_URL = 'http://localhost:5000';  // 本地後端 API 位址
+const API_BASE_URL = '';  // 使用相對路徑
 const ERROR_MESSAGES = {
     NETWORK_ERROR: '網路回應不正確',
     GENERAL_ERROR: '抱歉，發生了一些錯誤，請稍後再試。'
